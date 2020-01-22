@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:jms="http://www.mulesoft.org/schema/mule/jms" xmlns:ftp="http://www.mulesoft.org/schema/mule/ftp"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ftp http://www.mulesoft.org/schema/mule/ftp/current/mule-ftp.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd">
+	<flow name="mealsngoFlow" doc:id="ef0acf63-f137-444b-a0b7-087fd51b1f65" >
+		<jms:listener doc:name="Listener" doc:id="1f04b3ee-1928-4506-a40e-80ae4ae8ce5f" config-ref="JMS_Config" destination="mealsNGo"/>
+		<ftp:write doc:name="Write" doc:id="27ccb92f-c31c-454a-a0a3-f233c2eadd8c" config-ref="Partner2_FTP_Config" path="'MULEBANK-gc-' ++ vars.creationDateUnixEpoch ++ '.csv'">
+			<ftp:content ><![CDATA[#[output application/csv --- payload]]]></ftp:content>
+		</ftp:write>
+	</flow>
+</mule>

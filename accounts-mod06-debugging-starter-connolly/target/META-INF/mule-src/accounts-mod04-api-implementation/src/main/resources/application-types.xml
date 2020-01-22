@@ -1,0 +1,30 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="Account" format="java">
+      <types:shape format="raml"><![CDATA[#%RAML 1.0 DataType
+
+type: object
+properties:
+  salesID: string
+  id: integer
+  firstName: string
+  lastName: string
+  address: string
+  postal: string
+  country: string
+  creationDate: datetime
+  accountType: string
+  miles: integer]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#4486628c-2a63-43de-b85a-4f17f95a723d">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="Account"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>

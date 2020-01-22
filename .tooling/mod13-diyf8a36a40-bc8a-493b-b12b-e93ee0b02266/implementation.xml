@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd">
+	<configuration-properties doc:name="Configuration properties" doc:id="237c0e7a-6ab3-443d-b576-2b65d792d0cb" file="config.yaml" />
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="c949add1-4894-4ebe-99f5-289d98555380" >
+		<db:my-sql-connection host="${db.host}" port="${db.port}" user="${db.user}" password="${db.password}" database="${db.database}" />
+	</db:config>
+	<vm:config name="VM_Config" doc:name="VM Config" doc:id="2d631348-8bea-4d2e-b0f7-ce36f97417eb" queues="" >
+		<vm:connection >
+			<reconnection />
+			<reconnection />
+		</vm:connection>
+	</vm:config>
+	<flow name="batchProcess" doc:id="8e1772cb-aa54-4415-99c0-815283340af4" >
+		<scheduler doc:name="Scheduler" doc:id="655d361c-cc4f-4e91-9406-5cc39928b3c0" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="5" timeUnit="SECONDS"/>
+			</scheduling-strategy>
+		</scheduler>
+		<os:retrieve doc:name="Retrieve lastTransID" doc:id="24d9a0fa-2bd0-4d71-8c99-1dbf853ae3c9" key="lastTransID">
+			<os:default-value ><![CDATA[#[0]]]></os:default-value>
+		</os:retrieve>
+		<db:select doc:name="Select" doc:id="0eb29e01-f1d3-43e6-b9a6-7d6692e9b4e1" config-ref="Database_Config">
+			<db:sql >SELECT * FROM flights_transactions WHERE transactionID &gt; :lastTransID
+LIMIT 10</db:sql>
+			<db:input-parameters ><![CDATA[#[{ 
+	lastTransID: vars.lastTransID
+}]]]></db:input-parameters>
+		</db:select>
+		<os:store doc:name="Store lastTransID" doc:id="cc596bbb-71b0-48b0-95b8-f2061d434aa7" key="lastTransID">
+			<os:value ><![CDATA[#[max(payload.*transactionID  default [vars.lastTransID] )]]]></os:value>
+		</os:store>
+		<batch:job jobName="implementationBatch_Job" doc:id="56ec78d7-bca4-4452-a3a2-5b02eb8bc7f2" >
+			<batch:process-records >
+				<batch:step name="Batch_Step" doc:id="bd7e4df2-416d-4f09-b926-34e3ff2cfd46" >
+					<vm:publish-consume doc:name="Publish consume" doc:id="31a7f23d-cde3-43b6-8bbe-dd411b7bf45e" config-ref="VM_Config" queueName="validate"/>
+				</batch:step>
+			</batch:process-records>
+		</batch:job>
+	</flow>
+	<flow name="validate" doc:id="8bd99863-16f0-44ed-b267-73b3214dd21a" >
+		<vm:listener doc:name="validate" doc:id="bb051907-b914-488b-98e0-7e60bca187c0" queueName="validate" config-ref="VM_Config"/>
+	</flow>
+</mule>

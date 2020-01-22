@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename resource &apos;DIY07-Connolly/src/main/resources/env-properties.yaml&apos; to &apos;dev-properties.yaml&apos;" description="Rename resource &apos;env-properties.yaml&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="src/main/resources/env-properties.yaml" name="dev-properties.yaml" stamp="1571599861920" updateReferences="true"/>
+</session>

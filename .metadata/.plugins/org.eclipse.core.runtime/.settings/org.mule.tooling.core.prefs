@@ -1,0 +1,4 @@
+eclipse.preferences.version=1
+mule_core_plugin_preference_maven_embedded=false
+mule_core_plugin_preference_maven_override_m2_repo=false
+mule_core_plugin_preference_maven_path=C\:\\dev\\apache-maven-3.6.2

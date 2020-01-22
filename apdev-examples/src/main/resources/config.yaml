@@ -1,0 +1,17 @@
+http:
+  port: "8081"
+  
+sfdc:
+  username: "pconnol1@hawk.iit.edu"
+  password: "Moneys2$"
+  token: "Do9jE26SOpuJG6WjtsY8FRGp9"
+  
+file:
+  accountsDir: 'C:\Users\conno\Google Drive\Mule 4\SolutionFiles\MUFundamentals4.1_studentFiles_22sept2018\MUFundamentals4.1_studentFiles_22sept2018\resources'
+  
+db:
+  host: "mudb.learn.mulesoft.com"
+  port: "3306"
+  user: "mule"
+  password: "mule"
+  database: "training"

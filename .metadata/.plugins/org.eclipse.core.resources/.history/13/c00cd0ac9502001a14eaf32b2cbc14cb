@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:jms="http://www.mulesoft.org/schema/mule/jms" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd">
+	<jms:config name="JMS_Config" doc:name="JMS Config" doc:id="6de3cd45-0692-418e-99aa-1f91bc09caf7" >
+		<jms:active-mq-connection />
+	</jms:config>
+	<flow name="processVisaGiftCardsFlow" doc:id="e342de5e-8cf5-447b-b5e2-4f20125b143b" >
+		<file:listener doc:name="On New or Updated File" doc:id="8ed58d6b-89f0-4c39-a084-4bc651c4b5b4" directory="${master.fileIn}" moveToDirectory="${master.fileProcessed}" outputMimeType="application/csv">
+			<scheduling-strategy >
+				<fixed-frequency frequency="${master.pollFrequency}"/>
+			</scheduling-strategy>
+			<file:matcher pathPattern="*.csv"/>
+		</file:listener>
+		<ee:transform doc:name="Transform Message" doc:id="d9082336-0ae1-48af-bc7d-8eb2eb84dbaa" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-variable value="#[sizeOf(payload)]" doc:name="recordCount" doc:id="a5635e77-e19e-4565-a8b6-f320812e8125" variableName="recordCount" />
+		<set-variable value="#[payload[0].partner]" doc:name="partner" doc:id="9f6a7623-de78-472c-8c43-0eb9e0757e90" variableName="partner" />
+		<choice doc:name="Choice" doc:id="5763652b-70d4-4775-bb87-e86920c85bb9" >
+			<when expression="#[vars.partner == p('partner1.name')]">
+				<ee:transform doc:name="Transform Message" doc:id="485759b9-7ac8-4b7a-a704-fbc930a802fe" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+%dw 2.0
+output application/json
+---
+payload map ((giftcard) -> {
+	balance: giftcard.amount_granted,
+	createdOn: now() as String {format: "yyyy-MM-dd HH:mm:ss"},
+	number: giftcard.card_no,
+	sourceID: "MULEBANK-0949"
+}	
+)]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<jms:publish doc:name="Publish" doc:id="cf92aa10-8ecd-434d-b3bf-6356ff92f2a4" config-ref="JMS_Config" destination="foodNSavings"/>
+			</when>
+			<when expression="#[vars.partner == p('partner2.name')]">
+				<set-payload value="#[now()]" doc:name="creationDate" doc:id="3b363773-a26a-4c57-8858-a3f2e9ce85fa" />
+				<ee:transform doc:name="Transform Message" doc:id="582941eb-fbdd-4e96-8411-6398feac6bdf">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload map ((giftcard) ->
+	{
+      gc_balance: giftcard.amount_granted,
+	  gc_card_number: giftcard.card_no,
+	  origin: "MULEBANK-0949",
+	  card_type: "VISA",
+	  expiration: (vars.creationDate + |P3M|) as Number
+	}
+)]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<set-variable value="#[vars.creationDate as Number]" doc:name="Unix Epoch" doc:id="3278cf21-0164-426c-96c2-c406b2209905" variableName="creationDateUnixEpoch"/>
+				<jms:publish doc:name="Publish" doc:id="b824c655-60cd-4b19-ba0b-25e85194d065" config-ref="JMS_Config" destination="mealsNGo"/>
+			</when>
+			<when expression="#[vars.partner == p('partner3.name')]">
+				<ee:transform doc:name="Transform Message" doc:id="b50e9722-88b2-43d5-8a43-974d4d96d6c1" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map ((giftcard) ->
+	{
+		cardNo: giftcard.card_no,
+		amount: giftcard.amount_granted,
+		bankOriginationID: "MULEBANK-0949"			
+	}
+)]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<jms:publish doc:name="Publish" doc:id="0ca7cf63-e95a-4162-aa31-a61566447120" config-ref="JMS_Config" destination="oRetailPlus"/>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="ef278ec6-9b94-4635-9439-8e7a8a657294" message='#["Unsupported partner found in file: " ++ attributes.fileName]'/>
+				<set-payload value='#[output text/plain --- "Partner: " ++ vars.partner ++ ".  Not transferring the file."]' doc:name="Set Payload" doc:id="51482ca6-d04e-4751-8a3c-5deb22782de9" />
+				<file:write doc:name="Write" doc:id="60d3f786-7134-4777-8c54-b4eae2a85b38" path="#[p('master.fileWrite') ++ '/' ++ attributes.fileName ++ '-report.txt']"/>
+			</otherwise>
+		</choice>
+		<set-payload value='#["Processed " ++ vars.recordCount ++ " cards for " ++ vars.partner ++ " with Status: " ++ attributes.properties.userProperties.jmsStatusMessage default ""]' doc:name="Set Payload" doc:id="f304e173-c5c7-425f-91b2-391b25630f2e" />
+		<set-variable value='#[now() as String {format: "yyyy-MM-dd-HH_mm_ss"}]' doc:name="Set Variable" doc:id="2b9f297d-3028-4a06-83e2-9fa0479d2c26" variableName="dateTimeFormatted"/>
+	</flow>
+</mule>

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:java="http://www.mulesoft.org/schema/mule/java" xmlns:spring="http://www.mulesoft.org/schema/mule/spring" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/spring http://www.mulesoft.org/schema/mule/spring/current/mule-spring.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="5fdcfab5-a727-48d4-a307-402558934ab6" >
+		<db:my-sql-connection host="${db.host}" port="${db.port}" user="${db.user}" password="${db.password}" database="${db.database}" />
+	</db:config>
+	<configuration-properties doc:name="Configuration properties" doc:id="175c7ff4-01f8-47ec-b427-165591887bd0" file="dev-configuration.yaml" />
+	<vm:config name="VM_Config" doc:name="VM Config" doc:id="68a14e12-9623-4033-a3d7-a638c06c8490" >
+		<vm:queues >
+			<vm:queue queueName="validate" />
+		</vm:queues>
+	</vm:config>
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="bf9a71c5-d847-4711-9b19-9757da4885a4" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="batchProcess" doc:id="5da158b3-b575-43f2-8d9a-f78e7b6c36d6" initialState="started">
+		<scheduler doc:name="Scheduler" doc:id="18e51a78-e7dd-48cd-9252-1223f0b4e49d" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="${frequency}"/>
+			</scheduling-strategy>
+		</scheduler>
+		<os:retrieve doc:name="ObjectStore: Get lastTransID" doc:id="b194ca27-3833-4b6f-8d4d-c0868097336c" key="lastTransID" target="lastTransID">
+			<os:default-value ><![CDATA[0]]></os:default-value>
+		</os:retrieve>
+		<db:select doc:name="Retrieve Flights transactions" doc:id="eb05c9bb-1656-4170-896f-9020bcfcdc0c" config-ref="Database_Config">
+			<db:sql >SELECT * FROM flights_transactions WHERE transactionID &gt; :lastTransID
+LIMIT 10</db:sql>
+			<db:input-parameters ><![CDATA[#[{ 
+	lastTransID: vars.lastTransID
+}]]]></db:input-parameters>
+		</db:select>
+		<os:store doc:name="ObjectStore: Store maximum transactionID" doc:id="46a69327-63db-476a-b44b-9de7bd76f123" key="lastTransID">
+			<os:value><![CDATA[#[  max(payload.*transactionID  default [vars.lastTransID] )   ]]]></os:value>
+		</os:store>
+		<batch:job jobName="Batch_Job" doc:id="654b7c2f-b93f-4c92-8417-cf34ded71a8a" >
+			<batch:process-records >
+				<batch:step name="ValidateTransactionStep" doc:id="0942b4ea-052e-430a-894a-afef2293ffc7" >
+					<vm:publish-consume queueName="validate" doc:name="VM: queue validate" doc:id="2b079408-2529-4c45-820e-92bdd2e5c8a1" config-ref="VM_Config" target="valid"/>
+				</batch:step>
+				<batch:step name="WriteValidTransactionsStep" doc:id="909ce4db-4bc9-448c-85db-f5cdde5e87e3" acceptExpression="#[vars.valid default false]" >
+					<batch:aggregator doc:name="Commit 50 Records" doc:id="f4851354-0d46-4e30-a5ea-54a3ddcfd7ce" size="50" >
+						<file:write doc:name="File" doc:id="070502ce-eca2-49d9-88db-83c0b536baaf" path="#[&quot;$(p('fileoutput'))/batchFile_$(now() as String {format: 'YYYY-MM-dd-HH.mm.SS'}).csv&quot;]" >
+							<file:content ><![CDATA[#[output application/csv --- payload]]]></file:content>
+						</file:write>
+					</batch:aggregator>
+				</batch:step>
+			</batch:process-records>
+			<batch:on-complete >
+				<logger level="INFO" doc:name="Log batch summary" doc:id="b253fdca-fe4c-414c-af8c-b18c3d466b10" message="#[payload]" />
+			</batch:on-complete>
+		</batch:job>
+	</flow>
+	<flow name="validate" doc:id="fec72848-f976-4ae3-992f-98480a4fc09f" >
+		<vm:listener queueName="validate" doc:name="VM: queue validate" doc:id="8a34b26c-b972-4088-8131-72a646bd085b" config-ref="VM_Config" />
+		<ee:transform doc:name="Validate payload" doc:id="53553a94-5040-4802-8948-a1ce41e94e1e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+if ( mod(payload.transactionID as Number,4) == 0 )
+	true
+else
+	false
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

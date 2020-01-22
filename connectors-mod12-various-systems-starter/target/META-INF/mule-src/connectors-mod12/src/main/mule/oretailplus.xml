@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:jms="http://www.mulesoft.org/schema/mule/jms" xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd">
+	<flow name="oretailplusFlow" doc:id="e9f17500-d499-4e8c-a884-91142e36fcb8" >
+		<jms:listener doc:name="Listener" doc:id="bb28f4d6-1328-411f-9d17-d06bb4b0ea82" config-ref="JMS_Config" destination="oRetailPlus"/>
+		<set-variable value="#[sizeOf(payload)]" doc:name="recordCount" doc:id="62cd1b31-8d7f-46c1-8ed8-389909460f9f" variableName="recordCount"/>
+		<file:write doc:name="Write" doc:id="f65003af-1613-4ed5-876f-8f2e66041ec5" path="#[p('partner3.fileWrite') ++ '/MULEBANK-$(now() as Number)-$(vars.recordCount).csv']">
+			<file:content ><![CDATA[#[output application/csv --- payload]]]></file:content>
+		</file:write>
+		<set-variable value="" doc:name="Set Variable" doc:id="f7c3495b-6bba-47d4-986c-32b6b2a23612" variableName="statusMessage"/>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="1dbe3658-3d3c-4482-9ec6-99b46f5ea5ed" >
+				<set-variable value="#['ERROR OCCURRED WHILE PROCESSING:' ++ error.description]" doc:name="Set Variable" doc:id="eaa17216-e6b5-4631-80f4-eef21478dbc0" variableName="statusMessage"/>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+</mule>

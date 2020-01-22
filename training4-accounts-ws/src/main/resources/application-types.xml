@@ -1,0 +1,42 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="account_object" format="java">
+      <types:shape format="raml"><![CDATA[#%RAML 1.0 DataType
+type: object
+properties:
+  ID? : integer
+  firstName : string
+  lastName : string
+  address : string
+  postal : string
+  country : string
+  miles : integer
+  creationDate? : datetime
+  type :
+    enum:
+      - "personal"
+      - "business"]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#d6a9b029-919a-419e-88c1-ae584cf8afa5">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="account_object"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#9cda74df-48b6-4472-8f28-8c025a03c652">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="account_object"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#7033dd69-014b-4641-a3ab-17f321d0966d"/>
+  <types:enrichment select="#ca7347e6-bf54-4a3f-9c05-376f34399cdd"/>
+</types:mule>

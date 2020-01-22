@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="cd60a14a-658e-4128-9386-8046bddbca34" >
+		<db:my-sql-connection host="mudb.learn.mulesoft.com" port="3306" user="mule" password="mule" database="training" />
+	</db:config>
+	<flow name="getAccounts" doc:id="d6a9b029-919a-419e-88c1-ae584cf8afa5" >
+		<db:select doc:name="Select" doc:id="81dfe42c-54ae-4ab9-b39f-7a09a9098218" config-ref="Database_Config">
+			<db:sql >SELECT *
+FROM flights_customers</db:sql>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="a481a491-8d27-4776-8fb3-2718d2e38d29" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	ID: payload01.accountID as Number,
+	firstName: ( payload01.name splitBy " " )[0] default "",
+	lastName: ( payload01.name  splitBy " " )[1] default "",
+	address: ((payload01.street default "") ++", " ++ (payload01.city default "")) ++ (payload01.state default ""),
+	accountID: payload01.accountID as Number default 0,
+	country: payload01.country default "",
+	miles: payload01.miles default 0,
+	creationDate: payload01.creationDate as DateTime,
+	"type": payload01.accountType default "",
+	street: payload01.street default "",
+	state: payload01.state default "",
+	name: payload01.name default "",
+	city: payload01.city default "",
+	postal: payload01.postal default ""
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="getAccountByID" doc:id="9cda74df-48b6-4472-8f28-8c025a03c652" >
+		<db:select doc:name="Select" doc:id="7fce90fb-6134-4ab0-befe-c45c1c7f30c2" config-ref="Database_Config">
+			<db:sql >SELECT *
+FROM flights_customers
+WHERE accountID = :ID</db:sql>
+			<db:input-parameters ><![CDATA[#[{"ID" : attributes.uriParams.ID}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="64b517d9-b31c-4887-8395-908a19eb9017" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	ID: payload01.accountID as Number,
+	firstName: ( payload01.name splitBy " " )[0] default "",
+	lastName: ( payload01.name  splitBy " " )[1] default "",
+	address: ((payload01.street default "") ++", " ++ (payload01.city default "")) ++ (payload01.state default ""),
+	accountID: payload01.accountID as Number default 0,
+	country: payload01.country default "",
+	miles: payload01.miles default 0,
+	creationDate: payload01.creationDate as DateTime,
+	"type": payload01.accountType default "",
+	street: payload01.street default "",
+	state: payload01.state default "",
+	name: payload01.name default "",
+	city: payload01.city default "",
+	postal: payload01.postal default ""
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="putAccount" doc:id="422f334e-523f-4cb5-9f55-10c70ecf4ba9" >
+		<set-payload value='#[{"message" : "account replaced (but not really)"}]' doc:name="Set Payload" doc:id="1444f357-367f-41cc-815f-4d1a4139d4b2" />
+	</flow>
+	<flow name="patchAccount" doc:id="d540a7a2-38a9-4e56-9241-33082af50e3e" >
+		<set-payload value='#[{"message": "account modified (but not really)"}]' doc:name="Set Payload" doc:id="3c716b75-d66d-47a3-8f58-ca8b8e731833" />
+	</flow>
+	<flow name="deleteAccount" doc:id="655c2bf9-2038-40b6-976c-9f2e1b554f99" >
+		<set-payload value='#["message": "account deleted (but not really)"]' doc:name="Set Payload" doc:id="6b278a08-9738-432e-b60e-290cfa20da4c" />
+	</flow>
+</mule>

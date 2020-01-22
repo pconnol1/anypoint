@@ -1,0 +1,6 @@
+authenticated.users=[{"id"\:"73a61106-5e39-4e6d-947a-7568a73951ea","token"\:"8c1d46a7-f00e-4b6e-a136-2ed8b2bfd23a","userId"\:"pconnol1","refreshToken"\:"","baseUrl"\:"https\://anypoint.mulesoft.com/"}]
+current.token=8c1d46a7-f00e-4b6e-a136-2ed8b2bfd23a
+current.user=pconnol1
+eclipse.preferences.version=1
+expiration.time=10
+org.mule.tooling.amc.apps={"userProjectMap"\:{"pconnol1"\:{"training4-american"\:"{\\"applicationName\\"\:\\"training4-american-ws-connolly\\",\\"muleRuntime\\"\:\\"4.2.1\\",\\"properties\\"\:{}}","training4-american-ws-wt4.6"\:"{\\"applicationName\\"\:\\"training4-american-ws-connolly1\\",\\"muleRuntime\\"\:\\"4.2.1\\",\\"properties\\"\:{}}","accounts-mod04-api-implementation-solution"\:"{\\"applicationName\\"\:\\"training-accounts-api-connolly\\",\\"muleRuntime\\"\:\\"4.2.1\\",\\"properties\\"\:{}}"}}}

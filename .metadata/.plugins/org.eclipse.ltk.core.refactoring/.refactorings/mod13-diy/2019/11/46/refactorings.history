@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename resource &apos;mod13-diy/src/main/mule/mod13-diy.xml&apos; to &apos;implementation.xml&apos;" description="Rename resource &apos;mod13-diy.xml&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="src/main/mule/mod13-diy.xml" name="implementation.xml" stamp="1573401373877" updateReferences="true"/>
+</session>

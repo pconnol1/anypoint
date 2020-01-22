@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<http:listener-config name="test_HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="b18b34e0-f0b7-47b5-a8a4-f9c303929f34" >
+		<http:listener-connection host="0.0.0.0" port="9090" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="d395793f-eefb-4d60-ab51-5e20653b20e9" basePath="/api" >
+		<http:request-connection host="0.0.0.0" port="8081" />
+	</http:request-config>
+	<flow name="testGETALLAccounts" doc:id="5933c5ea-8013-4b16-bfc4-5b684095196f" >
+		<http:listener doc:name="Listener" doc:id="f6384480-6b41-425a-9f1c-029142ffffe8" config-ref="test_HTTP_Listener_config" path="/testGetALLAccounts"/>
+		<http:request method="GET" doc:name="Request" doc:id="c7f61bdc-34e9-4a9e-bd49-1c257e618bff" path="/accounts" config-ref="HTTP_Request_configuration">
+			<http:headers ><![CDATA[#[output applicaton/java
+---
+{
+	"Requester-ID" : "test"
+}]]]></http:headers>
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"type" : "personal"
+}]]]></http:query-params>
+		</http:request>
+	</flow>
+	<flow name="testPOSTAccounts" doc:id="03ece71f-0ecf-4d70-b47e-4a0f2f27aad8" >
+		<http:listener doc:name="Listener" doc:id="60479271-478f-48dd-b263-a24e5e8a1917" config-ref="test_HTTP_Listener_config" path="/testPostAccounts"/>
+		<set-payload value='[ {     "firstName": "John",     "lastName": "Smith",     "address": "1002 Main Street, Springfield TX",     "postal": "77002",     "country": "USA",     "accountType": "personal",     "miles": 8492   } ]' doc:name="Set Payload" doc:id="d8e433d1-3c04-46a0-b486-117d362a6b31" mimeType="application/json"/>
+		<http:request method="POST" doc:name="Request" doc:id="2b2dd635-5471-4fc2-a932-028671ab2efb" config-ref="HTTP_Request_configuration" path="/accounts">
+			<http:headers ><![CDATA[#[output applicaton/java
+---
+{
+	"Requester-ID" : "test"
+}]]]></http:headers>
+		</http:request>
+	</flow>
+	<flow name="testGETONEAccount" doc:id="56a0ed5c-17b9-47e9-8f1e-1d24d177a32b" >
+		<http:listener doc:name="Listener" doc:id="70d2188a-3423-4c29-a4a3-d09043397747" config-ref="test_HTTP_Listener_config" path="/testGetOneAccount"/>
+		<http:request method="GET" doc:name="Request" doc:id="dc3c6919-54a5-4c4e-86eb-10aa4ffa5a67" path="/accounts/{ID}" config-ref="HTTP_Request_configuration">
+			<http:headers ><![CDATA[#[output applicaton/java
+---
+{
+	"Requester-ID" : "test"
+}]]]></http:headers>
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	"ID" : 4400
+}]]]></http:uri-params>
+		</http:request>
+	</flow>
+	<flow name="testPutOneAccount" doc:id="b84381db-8381-4061-9e80-747c63bad28e" >
+		<http:listener doc:name="Listener" doc:id="3b231528-2941-48c6-8e5d-a1cf62bc6b37" config-ref="test_HTTP_Listener_config" path="/testPutOneAccount"/>
+		<set-payload value='{     "firstName": "John",     "lastName": "Smith",     "address": "1002 Main Street, Springfield TX",     "postal": "77002",     "country": "USA",     "accountType": "personal",     "miles": 8492   } ' doc:name="Set Payload" doc:id="5b492f84-a74e-4ad3-abde-9ce4a858ef9c" mimeType="application/json"/>
+		<http:request method="PUT" doc:name="Request" doc:id="c8db7f9b-8cdf-4f88-9137-d992ed308650" config-ref="HTTP_Request_configuration" path="/accounts/{ID}">
+			<http:headers ><![CDATA[#[output applicaton/java
+---
+{
+	"Requester-ID" : "test"
+}]]]></http:headers>
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	"ID" : 4400
+}]]]></http:uri-params>
+		</http:request>
+	</flow>
+	<flow name="testPatchOneAccount" doc:id="9b05cf31-259e-4c1c-a18b-3060f9e7ee52" >
+		<http:listener doc:name="Copy_of_Listener" doc:id="a2fe4d3d-7526-40e3-b006-9e6e7f1c1642" config-ref="test_HTTP_Listener_config" path="/testPatchOneAccount" />
+		<set-payload value='{     "firstName": "John",     "lastName": "Smith",     "address": "1002 Main Street, Springfield TX",     "postal": "77002",     "country": "USA",     "accountType": "personal",     "miles": 8492   } ' doc:name="Copy_of_Set Payload" doc:id="e221406e-60b6-446d-b997-acffb5369f61" mimeType="application/json" />
+		<http:request method="PATCH" doc:name="Copy_of_Request" doc:id="3c9d11f0-49fd-436e-84ef-961c9c2e4a30" config-ref="HTTP_Request_configuration" path="/accounts/{ID}" >
+			<http:headers ><![CDATA[#[output applicaton/java
+---
+{
+	"Requester-ID" : "test"
+}]]]></http:headers>
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	"ID" : 4400
+}]]]></http:uri-params>
+		</http:request>
+	</flow>
+	<flow name="testDeleteOneAccount" doc:id="00b29833-606b-4739-a242-b4ea552de8d9" >
+		<http:listener doc:name="Copy_of_Listener" doc:id="669f8f70-5c8e-4078-a68f-777ac59cf8f0" config-ref="test_HTTP_Listener_config" path="/testDeleteOneAccount" />
+		<http:request method="DELETE" doc:name="Copy_of_Request" doc:id="576ed3f6-04e4-4b90-9e8d-ff6492a1f5a9" config-ref="HTTP_Request_configuration" path="/accounts/{ID}" >
+			<http:headers ><![CDATA[#[output applicaton/java
+---
+{
+	"Requester-ID" : "test"
+}]]]></http:headers>
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	"ID" : 4400
+}]]]></http:uri-params>
+		</http:request>
+	</flow>
+</mule>

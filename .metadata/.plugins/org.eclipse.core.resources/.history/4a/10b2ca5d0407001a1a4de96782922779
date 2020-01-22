@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<configuration-properties doc:name="Configuration properties" doc:id="237c0e7a-6ab3-443d-b576-2b65d792d0cb" file="config.yaml" />
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="c949add1-4894-4ebe-99f5-289d98555380" >
+		<db:my-sql-connection host="${db.host}" port="${db.port}" user="${db.user}" password="${db.password}" database="${db.database}" />
+	</db:config>
+	<flow name="batchProcess" doc:id="8e1772cb-aa54-4415-99c0-815283340af4" >
+		<scheduler doc:name="Scheduler" doc:id="655d361c-cc4f-4e91-9406-5cc39928b3c0" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="5" timeUnit="SECONDS"/>
+			</scheduling-strategy>
+		</scheduler>
+		<db:select doc:name="Select" doc:id="0eb29e01-f1d3-43e6-b9a6-7d6692e9b4e1" config-ref="Database_Config"/>
+	</flow>
+</mule>
